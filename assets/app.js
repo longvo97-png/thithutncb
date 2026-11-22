@@ -1,3 +1,5 @@
+import {grammarReview} from './grammar.js';
+
 const app = document.querySelector('#app');
 const storageKey = 'russian-practice-v1';
 const sections = [
@@ -76,6 +78,11 @@ try {
 }
 
 let exams = [];
+let publishedKeys = {};
+
+function answerKeys(id) {
+  return {...publishedKeys[id], ...state.keys[id]};
+}
 let exam = null;
 let page = 'home';
 let timerStarted = null;
@@ -201,27 +208,18 @@ function questionPage(main) {
     jump.classList.toggle('answered', Boolean(value.trim()));
     save();
   }
-  if (question.choices) {
+  if (n <= 25) {
     const choices = el('fieldset', undefined, {class: 'choices'});
-    choices.append(el('legend', 'Đáp án', {class: 'sr-only'}));
-    for (const [key, value] of Object.entries(question.choices)) {
-      const label = el('label', undefined, {lang: 'ru'});
-      const input = el('input', undefined, {type: 'radio', name: 'answer', value: key});
-      input.checked = data.answers[n] === key;
-      input.disabled = data.complete;
-      input.addEventListener('change', () => answer(key));
-      label.append(input, el('span', `${key}. ${value}`));
-      choices.append(label);
+    choices.append(el('legend', n <= 20 ? 'Đáp án' : 'Câu trả lời phù hợp', {class: 'sr-only'}));
+    for (const [key, value] of Object.entries(question.choices ?? exam.matching)) {
+      const option = button(`${key}. ${value}`, () => {
+        answer(key);
+        chooseQuestion(n + 1);
+      }, {lang: 'ru', 'aria-pressed': String(data.answers[n] === key)});
+      option.disabled = data.complete;
+      choices.append(option);
     }
     card.append(choices);
-  } else if (n <= 25) {
-    const select = el('select', undefined, {id: 'answer'});
-    select.append(el('option', 'Chưa chọn', {value: ''}));
-    for (const [key, value] of Object.entries(exam.matching)) select.append(el('option', `${key}. ${value}`, {value: key, lang: 'ru'}));
-    select.value = data.answers[n] ?? '';
-    select.disabled = data.complete;
-    select.addEventListener('change', () => answer(select.value));
-    card.append(el('label', 'Câu trả lời phù hợp', {for: 'answer'}), select);
   } else {
     const input = el('textarea', undefined, {id: 'answer', lang: 'ru', rows: '3', spellcheck: 'false'});
     input.value = data.answers[n] ?? '';
@@ -262,17 +260,45 @@ function questionPage(main) {
   updateTimer();
 }
 
+function grade(data, keys) {
+  const graded = Object.keys(keys).map(Number).filter(n => n <= 25);
+  const correct = graded.filter(n => data.answers[n]?.trim() === keys[n]).length;
+  return {graded: graded.length, correct};
+}
+
+function showGrammar(main) {
+  const review = el('section', undefined, {class: 'card grammar', 'aria-labelledby': 'grammar-title'});
+  review.append(el('h2', 'Ôn ngữ pháp theo đề', {id: 'grammar-title'}));
+  for (const topic of grammarReview(exam)) {
+    const item = el('details');
+    item.append(el('summary', topic.title), el('p', topic.explanation), el('p', topic.example, {lang: 'ru'}));
+    const links = el('div', undefined, {class: 'row', 'aria-label': 'Câu liên quan'});
+    links.append(el('span', 'Câu liên quan', {class: 'muted'}));
+    for (const n of topic.questions) links.append(button(String(n), () => chooseQuestion(n), {'aria-label': `Ôn câu ${n}`}));
+    item.append(links);
+    review.append(item);
+  }
+  main.append(review);
+}
+
 function summary(main) {
   const data = record();
   const answered = count(data);
   main.append(el('h1', `Tổng kết đề ${exam.id}`), el('p', `${answered}/45 đã trả lời · ${45 - answered} câu bỏ trống`));
-  const keys = state.keys[exam.id] ?? {};
-  const graded = Object.entries(keys).filter(([number]) => Number(number) <= 25);
-  if (data.complete && graded.length) {
-    const correct = graded.filter(([number, key]) => data.answers[number]?.trim() === key).length;
-    main.append(el('p', `Đúng ${correct}/${graded.length} câu có đáp án đối chiếu. Câu tự luận cần giáo viên chấm.`));
+  const keys = answerKeys(exam.id);
+  const score = grade(data, keys);
+  if (data.complete) {
+    const result = el('section', undefined, {class: 'card score', 'aria-labelledby': 'score-title'});
+    result.append(el('h2', 'Kết quả chấm tự động', {id: 'score-title'}));
+    if (score.graded) {
+      result.append(el('p', `${score.correct}/${score.graded} điểm`, {class: 'score-value'}),
+        el('p', `${score.graded}/25 câu chọn đáp án và nối câu có khóa chấm. Câu tự luận cần giáo viên chấm.`, {class: 'muted'}));
+    } else {
+      result.append(el('p', 'Chưa có điểm vì đề này chưa có khóa đáp án. Sau khi giáo viên nhập khóa, điểm sẽ hiện tại đây.'));
+    }
+    main.append(result);
   } else {
-    main.append(el('p', 'Chỉ đối chiếu câu 1–25 khi giáo viên đã nhập đáp án và bài được xác nhận hoàn thành.', {class: 'muted'}));
+    main.append(el('p', 'Sau khi nộp bài, trang sẽ hiện điểm phần có khóa đáp án và nội dung ôn ngữ pháp.', {class: 'muted'}));
   }
   const controls = el('div', undefined, {class: 'row controls'});
   controls.append(button('Xem lại bài', () => navigate('question')),
@@ -290,13 +316,17 @@ function summary(main) {
     }, {class: 'primary'}));
   }
   main.append(controls);
+  if (data.complete) showGrammar(main);
   const list = el('ol', undefined, {class: 'summary-list'});
   for (const {number} of exam.questions) {
     const row = el('li');
     const key = data.complete ? keys[number] : '';
     row.append(button(`Câu ${number}`, () => chooseQuestion(number)),
       el('span', data.answers[number]?.trim() || 'Chưa trả lời', {lang: data.answers[number]?.trim() ? 'ru' : 'vi'}));
-    if (key) row.append(el('span', `Đáp án: ${key}`, {class: 'muted'}));
+    if (key) {
+      const result = number > 25 ? 'Đáp án tham khảo' : data.answers[number]?.trim() === key ? 'Đúng' : '0 điểm · Đáp án';
+      row.append(el('span', `${result} · ${key}`, {class: 'muted'}));
+    }
     if (data.marked.includes(number)) row.append(el('span', '★', {'aria-label': 'Đã đánh dấu'}));
     list.append(row);
   }
@@ -354,7 +384,9 @@ function settings(main) {
 
   card.append(el('h2', 'Dành cho giáo viên'), el('a', 'Tải mẫu JSON đáp án', {href: './data/answer-key-template.json', download: ''}));
   fileInput('keys', 'Nhập JSON đáp án', input => {
-    state.keys = {...state.keys, ...normalizeKeys(input)};
+    for (const [id, keys] of Object.entries(normalizeKeys(input))) {
+      state.keys[id] = {...state.keys[id], ...keys};
+    }
     save();
     feedback.textContent = 'Đã nhập đáp án.';
   });
@@ -382,7 +414,9 @@ function render(focus = false) {
   ({home, question: questionPage, summary, settings})[page](main);
   app.replaceChildren(header, main);
   if (focus) {
-    main.focus();
+    const heading = main.querySelector('h1');
+    heading.setAttribute('tabindex', '-1');
+    heading.focus({preventScroll: true});
     window.scrollTo(0, 0);
   }
 }
@@ -393,9 +427,9 @@ try {
   exams = await response.json();
   if (!Array.isArray(exams) || !exams.length) throw Error('Empty exam bank');
   render();
-  fetch('./data/answer-key.json').then(response => response.ok ? response.json() : null).then(keys => {
+  fetch('./data/answer-key.json', {signal: AbortSignal.timeout(5000)}).then(response => response.ok ? response.json() : null).then(keys => {
     if (!keys) return;
-    state.keys = {...normalizeKeys(keys), ...state.keys};
+    publishedKeys = normalizeKeys(keys);
     if (page === 'summary') render();
   }).catch(() => {});
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(error => console.warn('Offline:', error));

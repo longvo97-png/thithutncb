@@ -19,9 +19,10 @@ Không tải riêng ZIP lên repository mà không giải nén. Không cần npm
 ## Sử dụng
 
 - Chọn đề → chọn phần I–V → làm từng câu; chuyển bằng nút **Trước / Câu tiếp**, thanh phần học hoặc bảng số câu.
-- Trắc nghiệm dùng nút chạm lớn, nối câu dùng danh sách lựa chọn, tự luận dùng ô nhập tiếng Nga. Phần gạch chân ở câu 26–35 giữ đúng đánh dấu của Word.
+- Câu 1–25 tự chuyển sang câu kế tiếp khi bạn chọn đáp án. Câu tự luận dùng ô nhập tiếng Nga và chuyển bằng nút **Câu tiếp**. Phần gạch chân ở câu 26–35 giữ đúng đánh dấu của Word.
 - Có đồng hồ tự bấm giờ (không phải thời gian thi quy định), đánh dấu xem lại, chỉnh cỡ chữ, sáng/tối.
 - Bài làm được **lưu tại trình duyệt trên thiết bị** qua `localStorage`. Không tự động đồng bộ giữa các điện thoại hoặc khi học sinh dùng trình duyệt riêng tư/xóa dữ liệu.
+- Sau khi nộp bài, **Tổng kết** hiển thị điểm trên số câu có khóa đáp án và mục **Ôn ngữ pháp theo đề** với quy tắc, ví dụ và liên kết đến các câu liên quan.
 - **Tổng kết** → **Tải bài làm .txt** để gửi giáo viên. **Cài đặt** → **Xuất dữ liệu .json** để sao lưu cả 20 đề hoặc chuyển máy; có thể nhập lại JSON đó.
 - Cài đặt → **Tên học sinh** để ghi tên trên file `.txt`.
 
@@ -34,7 +35,7 @@ Không tải riêng ZIP lên repository mà không giải nén. Không cần npm
 1. Tải `data/answer-key-template.json` hoặc dùng trực tiếp file mẫu trong ZIP.
 2. Điền đáp án theo đề và số câu: `1`–`20` nhận ký tự **А, Б, В, Г** (chữ Kirin, không phải A/B Latin); `21`–`25` nhận **а, б, в, г, д**. Có thể nhập đáp án tham khảo cho câu 26–45, nhưng ứng dụng không tự chấm tự luận.
 3. Đổi tên file thành `answer-key.json`, đặt trong `data/` rồi đẩy lên GitHub cùng website **hoặc** giữ riêng và dùng **Cài đặt → Dành cho giáo viên → Nhập JSON đáp án** trên thiết bị có nhu cầu đối chiếu.
-4. Sau khi học sinh bấm **Xác nhận hoàn thành** tại trang Tổng kết, các câu có đáp án mới được so sánh. Website chỉ hiện **số câu đúng / số câu có khóa đáp án** cho câu 1–25; không tính thành điểm toàn bài vì các phần tự luận cần giáo viên chấm.
+4. Sau khi học sinh bấm **Xác nhận hoàn thành** tại trang Tổng kết, các câu có đáp án mới được so sánh. Website hiện điểm ngay, mỗi câu đúng được 1 điểm trên tổng số câu có khóa trong phần 1–25. Câu sai hoặc bỏ trống được 0 điểm. Với khóa đầy đủ, điểm tự động tối đa là 25. Các phần tự luận cần giáo viên chấm.
 
 **Cảnh báo**: `data/answer-key.json` trong repository Public là công khai. Cơ chế chỉ mở đáp án sau khi hoàn thành là quy ước giao diện, **không bảo mật đáp án**. Website chỉ phục vụ luyện tập, không dành cho kỳ thi giám sát hoặc chống gian lận.
 
@@ -44,6 +45,7 @@ Không tải riêng ZIP lên repository mà không giải nén. Không cần npm
 index.html                     Trang khởi chạy
 assets/styles.css              Giao diện responsive
 assets/app.js                  Logic làm bài, lưu, xuất/nhập, tổng kết
+assets/grammar.js              Quy tắc ngữ pháp và câu liên quan theo đề
 assets/icon.svg                Biểu tượng
 manifest.webmanifest           Cài lên màn hình chính (PWA)
 service-worker.js              Lưu bộ đệm offline sau lần tải thành công

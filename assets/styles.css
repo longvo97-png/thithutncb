@@ -47,7 +47,7 @@ button, select, textarea, input:not([type=radio]) {
 }
 button { cursor: pointer; font-weight: 650; }
 button:disabled { opacity: .5; cursor: default; }
-button:hover:not(:disabled), .choices label:hover { border-color: var(--accent); }
+button:hover:not(:disabled) { border-color: var(--accent); }
 button[aria-current=true], .primary {
   color: var(--accent-text);
   background: var(--accent);
@@ -89,18 +89,6 @@ a { color: var(--accent); }
 }
 .passage p:last-child { margin-bottom: 0; }
 .choices { display: grid; gap: .65rem; border: 0; padding: 0; margin: 0; }
-.choices label {
-  display: flex;
-  gap: .65rem;
-  align-items: center;
-  min-height: 44px;
-  padding: .5rem .75rem;
-  border: 1px solid var(--line);
-  border-radius: .65rem;
-  cursor: pointer;
-}
-.choices label:has(input:checked) { background: var(--soft); border-color: var(--accent); }
-input[type=radio] { accent-color: var(--accent); }
 .card > select, .card > textarea, .card > input { width: 100%; display: block; margin-top: .4rem; }
 textarea { resize: vertical; }
 .controls { margin-block: 1rem; }
@@ -125,3 +113,12 @@ textarea { resize: vertical; }
   header button { font-size: .85rem; padding-inline: .5rem; }
   .controls button { flex: 1 1 auto; }
 }
+
+.choices button { text-align: left; }
+.choices button[aria-pressed=true] { background: var(--soft); border-color: var(--accent); opacity: 1; }
+.score, .grammar { margin-block: 1rem; }
+.score-value { font-size: 1.8rem; font-weight: 750; margin-bottom: .15rem; }
+.score p:last-child { margin-bottom: 0; }
+.grammar details { border-top: 1px solid var(--line); padding-block: .5rem; }
+.grammar summary { cursor: pointer; font-weight: 650; padding-block: .5rem; }
+.grammar details .row button { min-width: 44px; }
