@@ -27,7 +27,7 @@ Không tải riêng ZIP lên repository mà không giải nén. Không cần npm
 
 ## Về đáp án và chấm điểm
 
-**Tệp Word nguồn không có bảng đáp án.** Website cố ý **không suy đoán đáp án hoặc công bố điểm số giả**. Tiến độ `x/45` là **số câu đã trả lời**, không phải số câu đúng.
+**Tệp Word nguồn không có bảng đáp án.** Website cố ý **không suy đoán đáp án hoặc công bố điểm số giả**. Tiến độ `x/45` là **số câu đã trả lời**, không phải số câu đúng. Bài đã xác nhận hoàn thành được khóa để xem lại và xuất kết quả.
 
 Để kích hoạt đối chiếu câu 1–25 sau khi giáo viên đã kiểm tra đáp án:
 
@@ -49,10 +49,9 @@ manifest.webmanifest           Cài lên màn hình chính (PWA)
 service-worker.js              Lưu bộ đệm offline sau lần tải thành công
 .nojekyll                      Bỏ qua xử lý Jekyll trên GitHub Pages
 data/exams.json                Đủ 20 đề × 45 câu, trích từ Word
- data/answer-key.json          Tùy chọn, không có sẵn vì Word thiếu đáp án
+data/answer-key.json          Tùy chọn, không có sẵn vì Word thiếu đáp án
 data/answer-key-template.json  Mẫu cho giáo viên (để trống)
-data/answer-key.example.json   Ví dụ định dạng (để trống)
-tools/extract_exams.py         Script trích xuất lại từ DOCX (python-docx)
+tools/extract_exams.py         Script trích xuất lại từ DOCX (thư viện chuẩn Python)
 extraction-audit.txt           Kết quả đối chiếu số lượng nội dung
 ```
 
@@ -61,7 +60,7 @@ extraction-audit.txt           Kết quả đối chiếu số lượng nội du
 Tại thư mục chứa `index.html`:
 
 ```bash
-python -m http.server 8000
+python3 -m http.server 8000
 ```
 
 Sau đó mở `http://localhost:8000`. Tránh nhấn đúp `index.html` trực tiếp theo đường dẫn `file://` vì trình duyệt có thể chặn việc tải JSON.
@@ -78,11 +77,10 @@ Sau đó mở `http://localhost:8000`. Tránh nhấn đúp `index.html` trực t
 Có thể trích xuất lại bằng:
 
 ```bash
-pip install python-docx
-python tools/extract_exams.py "duong-dan-den-file.docx"
+python3 tools/extract_exams.py "duong-dan-den-file.docx"
 ```
 
-Script sẽ sinh lại `data/exams.json`, báo lỗi nếu thiếu câu hoặc có bất thường ở lựa chọn A/Б/В/Г. Cần chạy thử giao diện sau khi thay nguồn.
+Script sẽ sinh lại `data/exams.json`, báo lỗi nếu thiếu câu hoặc có bất thường ở lựa chọn А/Б/В/Г. Cần chạy thử giao diện sau khi thay nguồn.
 
 ---
 

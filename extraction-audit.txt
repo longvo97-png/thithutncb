@@ -1,3 +1,4 @@
-Source: /mnt/data/ôn tập(1).docx Exam count: 20 Question count: 900
-Extract issues 0
-Saved /mnt/data/russian-exam-20/data/exams.json 363289
+Nguồn: ôn tập.docx (tệp Word người dùng cung cấp)
+20 đề × 45 câu = 900 câu
+Mỗi đề: 20 trắc nghiệm, 5 nối câu, 10 gạch chân, 5 đọc hiểu, 5 viết câu.
+Trích xuất: python3 tools/extract_exams.py <tệp.docx>
