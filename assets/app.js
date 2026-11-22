@@ -25,7 +25,7 @@ function button(text, action, attrs) {
 }
 
 function emptyState() {
-  return {name: '', theme: 'light', size: 'normal', exams: {}, keys: {}};
+  return {name: '', theme: 'light', size: 'normal', exams: {}, keys: {}, pendingResults: []};
 }
 
 function validChoice(number, answer) {
@@ -59,6 +59,14 @@ function normalizeState(input) {
   result.theme = input.theme === 'dark' ? 'dark' : 'light';
   result.size = input.size === 'large' ? 'large' : 'normal';
   result.keys = normalizeKeys(input.keys ?? {}, true);
+  if (Array.isArray(input.pendingResults)) {
+    result.pendingResults = input.pendingResults.filter(item => item
+      && typeof item.attemptId === 'string' && /^[a-f0-9-]{36}$/u.test(item.attemptId)
+      && Number.isInteger(item.examId) && item.examId >= 1 && item.examId <= 20
+      && typeof item.studentName === 'string' && item.studentName.length <= 120
+      && item.answers && typeof item.answers === 'object'
+      && Number.isInteger(item.elapsedMs) && item.elapsedMs >= 0);
+  }
   for (const [id, item] of Object.entries(input.exams)) {
     if (!/^(?:[1-9]|1\d|20)$/.test(id) || !item || typeof item !== 'object') throw Error();
     const answers = {};
@@ -67,10 +75,12 @@ function normalizeState(input) {
     }
     result.exams[id] = {
       answers,
+      studentName: typeof item.studentName === 'string' ? item.studentName.trim().slice(0, 120) : '',
       marked: Array.isArray(item.marked) ? [...new Set(item.marked.filter(n => Number.isInteger(n) && n >= 1 && n <= 45))] : [],
       current: Number.isInteger(item.current) && item.current >= 1 && item.current <= 45 ? item.current : 1,
       elapsed: Number.isFinite(item.elapsed) && item.elapsed >= 0 ? item.elapsed : 0,
       complete: item.complete === true,
+      attemptId: typeof item.attemptId === 'string' ? item.attemptId : '',
     };
   }
   return result;
@@ -87,6 +97,61 @@ try {
 
 let exams = [];
 let publishedKeys = {};
+let resultsEndpoint = '';
+let sendingResults = false;
+let queuedResultsChanged = false;
+
+function submissionStatus() {
+  const element = document.querySelector('#submission-status');
+  if (!element || !exam) return;
+  const pending = state.pendingResults.some(item => item.attemptId === record().attemptId);
+  element.textContent = pending
+    ? sendingResults ? 'Đang gửi kết quả đến giáo viên…' : 'Kết quả đang chờ gửi. Bạn có thể thử gửi lại.'
+    : 'Giáo viên đã nhận kết quả.';
+  const retry = document.querySelector('#retry-results');
+  if (retry) retry.hidden = !pending || sendingResults;
+}
+
+async function flushResults() {
+  if (!resultsEndpoint || !state.pendingResults.length) return;
+  if (sendingResults) {
+    queuedResultsChanged = true;
+    return;
+  }
+  sendingResults = true;
+  submissionStatus();
+  try {
+    // Capture the queue owner so a backup import during a request cannot
+    // remove an item from a different set of saved results.
+    const owner = state;
+    for (const payload of [...owner.pendingResults]) {
+      if (owner !== state) break;
+      try {
+        const response = await fetch(resultsEndpoint, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload),
+          credentials: 'omit',
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!response.ok) continue;
+        const receipt = await response.json();
+        if (receipt.received !== true || receipt.attemptId !== payload.attemptId) continue;
+        owner.pendingResults = owner.pendingResults.filter(item => item.attemptId !== payload.attemptId);
+        if (state === owner) save();
+      } catch {
+        // Keep the result queued for a reconnect or manual retry.
+      }
+    }
+  } finally {
+    sendingResults = false;
+    submissionStatus();
+    if (queuedResultsChanged) {
+      queuedResultsChanged = false;
+      void flushResults();
+    }
+  }
+}
 
 function answerKeys(id) {
   return {...publishedKeys[id], ...state.keys[id]};
@@ -103,7 +168,7 @@ let status;
 let timer;
 
 function record() {
-  return state.exams[exam.id] ??= {answers: {}, marked: [], current: 1, elapsed: 0, complete: false};
+  return state.exams[exam.id] ??= {answers: {}, studentName: '', marked: [], current: 1, elapsed: 0, complete: false};
 }
 
 function elapsed() {
@@ -143,7 +208,7 @@ function openExam(item) {
   exam = item;
   const data = record();
   timerBase = data.elapsed;
-  timerStarted = data.complete ? null : Date.now();
+  timerStarted = !data.complete && data.studentName ? Date.now() : null;
   navigate(data.complete ? 'summary' : 'question');
 }
 
@@ -214,8 +279,43 @@ function sectionIntro(main, [start, end, roman, name, instruction]) {
   dialog.showModal();
 }
 
+function studentNameForm(main, data) {
+  main.append(el('h1', `Đề ${exam.id}`));
+  const form = el('form', undefined, {class: 'card settings student-name-form'});
+  const field = el('input', undefined, {
+    id: 'exam-student',
+    name: 'student',
+    required: '',
+    maxlength: '120',
+    autocomplete: 'name',
+  });
+  field.value = state.name;
+  field.addEventListener('input', () => field.setCustomValidity(''));
+  form.append(el('label', 'Họ và tên học viên', {for: 'exam-student'}), field,
+    el('p', resultsEndpoint ? 'Khi nộp bài, họ tên, lựa chọn và thời lượng sẽ được gửi để giáo viên nhận kết quả.' : 'Tên sẽ xuất hiện trên kết quả và tệp bài làm.', {class: 'muted'}),
+    el('button', count(data) ? 'Tiếp tục làm bài' : 'Bắt đầu làm bài', {type: 'submit', class: 'primary'}));
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const name = field.value.trim();
+    if (!name) {
+      field.setCustomValidity('Vui lòng nhập họ và tên.');
+      field.reportValidity();
+      return;
+    }
+    data.studentName = name;
+    state.name = name;
+    timerStarted = Date.now();
+    navigate('question');
+  });
+  main.append(form);
+}
+
 function questionPage(main) {
   const data = record();
+  if (!data.complete && !data.studentName) {
+    studentNameForm(main, data);
+    return;
+  }
   const n = data.current;
   const question = exam.questions[n - 1];
   const section = sections.find(([start, end]) => n >= start && n <= end);
@@ -381,7 +481,10 @@ function showAnswerReview(main, data, keys) {
 function summary(main) {
   const data = record();
   const answered = count(data);
-  main.append(el('h1', `Tổng kết đề ${exam.id}`), el('p', `${answered}/45 đã chọn phương án`));
+  const studentName = data.studentName || state.name;
+  main.append(el('h1', `Tổng kết đề ${exam.id}`));
+  if (studentName) main.append(el('p', `Học viên: ${studentName}`));
+  main.append(el('p', `${answered}/45 đã chọn phương án`));
   const keys = answerKeys(exam.id);
   const score = grade(data, keys);
   if (data.complete) {
@@ -391,6 +494,13 @@ function summary(main) {
       el('p', `${score.correct}/45 câu đúng · Đọc hiểu 4 điểm/câu, các phần còn lại 2 điểm/câu.`, {class: 'muted'}));
     if (Object.entries(data.answers).some(([number, value]) => value.trim() && !validChoice(Number(number), value))) {
       result.append(el('p', 'Bài cũ có câu trả lời tự luận được giữ lại để xem và xuất bài. Để chấm các câu này, hãy làm lại đề và chọn phương án.'));
+    }
+    if (data.attemptId && resultsEndpoint) {
+      const pending = state.pendingResults.some(item => item.attemptId === data.attemptId);
+      const message = pending ? 'Kết quả đang chờ gửi.' : 'Giáo viên đã nhận kết quả.';
+      const retry = button('Thử gửi lại', flushResults, {id: 'retry-results'});
+      retry.hidden = !pending || sendingResults;
+      result.append(el('p', message, {id: 'submission-status', role: 'status'}), retry);
     }
     main.append(result);
   } else {
@@ -407,7 +517,7 @@ function summary(main) {
       const choice = Object.hasOwn(choicesFor(question), value) ? choicesFor(question)[value] : undefined;
       return `${question.number}. ${choice ? `${value}. ${choice}` : value?.trim() || '—'}`;
     });
-      download(`bai-lam-de-${exam.id}.txt`, [`Đề ${exam.id}`, `Họ tên: ${state.name || '—'}`, `Đã chọn: ${answered}/45`, ...(data.complete ? [`Điểm: ${score.points}/100`] : []), '', ...rows].join('\n'), 'text/plain;charset=utf-8');
+      download(`bai-lam-de-${exam.id}.txt`, [`Đề ${exam.id}`, `Họ tên: ${studentName || '—'}`, `Đã chọn: ${answered}/45`, ...(data.complete ? [`Điểm: ${score.points}/100`] : []), '', ...rows].join('\n'), 'text/plain;charset=utf-8');
     }));
   if (!data.complete) {
     controls.append(button('Xác nhận hoàn thành', () => {
@@ -415,7 +525,18 @@ function summary(main) {
       timerBase = elapsed();
       timerStarted = null;
       data.complete = true;
+      if (resultsEndpoint) {
+        data.attemptId = crypto.randomUUID();
+        state.pendingResults.push({
+          attemptId: data.attemptId,
+          studentName: data.studentName,
+          examId: exam.id,
+          answers: Object.fromEntries(Object.entries(data.answers).filter(([n, value]) => validChoice(Number(n), value))),
+          elapsedMs: Math.floor(timerBase),
+        });
+      }
       navigate('summary');
+      void flushResults();
     }, {class: 'primary'}));
   } else {
     controls.append(button('Làm lại đề', () => {
@@ -491,6 +612,7 @@ function settings(main) {
     state = updated;
     save();
     render(true);
+    void flushResults();
     app.querySelector('.settings [role=status]').textContent = 'Đã nhập bản sao lưu.';
   });
 
@@ -513,10 +635,8 @@ function render(focus = false) {
   const nav = el('nav', undefined, {class: 'shell row spread', 'aria-label': 'Điều hướng chính'});
   nav.append(button('Русский', () => navigate('home'), {class: 'brand', lang: 'ru', 'aria-label': 'Trang chủ'}));
   const links = el('div', undefined, {class: 'row'});
-  if (exam) links.append(
-    button('Làm bài', () => navigate('question')),
-    button('Tổng kết', () => navigate('summary')),
-  );
+  if (exam) links.append(button('Làm bài', () => navigate('question')));
+  if (exam && (record().studentName || record().complete)) links.append(button('Tổng kết', () => navigate('summary')));
   links.append(button('Cài đặt', () => navigate('settings')));
   nav.append(links);
   header.append(nav);
@@ -540,10 +660,11 @@ async function loadJson(path) {
 }
 
 try {
-  const [bank, converted, keys] = await Promise.all([
+  const [bank, converted, keys, resultsConfig] = await Promise.all([
     loadJson('./data/exams.json'),
     loadJson('./data/converted-questions.json'),
     loadJson('./data/answer-key.json'),
+    loadJson('./results-config.json').catch(() => ({})),
   ]);
   publishedKeys = normalizeKeys(keys);
   if (bank.length !== 20) throw Error('Incomplete exam bank');
@@ -556,7 +677,19 @@ try {
     }
   }
   exams = bank;
+  if (resultsConfig.endpoint) {
+    try {
+      const endpoint = new URL(resultsConfig.endpoint);
+      if (endpoint.protocol === 'https:' || (endpoint.protocol === 'http:' && endpoint.hostname === '127.0.0.1' && location.hostname === '127.0.0.1')) {
+        resultsEndpoint = endpoint.href;
+      }
+    } catch {
+      // A missing or invalid results URL leaves local practice available.
+    }
+  }
   render();
+  void flushResults();
+  window.addEventListener('online', flushResults);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(error => console.warn('Offline:', error));
   setInterval(updateTimer, 1000);
   setInterval(() => { if (timerStarted !== null) save(); }, 15000);

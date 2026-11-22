@@ -166,3 +166,6 @@ textarea { resize: vertical; }
 .review-options li strong { margin-inline-start: auto; font-size: .9rem; }
 .review-explanation { border-top: 1px solid var(--line); padding-top: .7rem; overflow-wrap: anywhere; }
 .review-explanation p { margin: .25rem 0 0; }
+
+.student-name-form label { margin-top: 0; }
+.student-name-form p { margin: .6rem 0 1rem; }

@@ -1,0 +1,11 @@
+name = "thithutncb-results"
+main = "worker.mjs"
+compatibility_date = "2025-05-05"
+
+[vars]
+SITE_ORIGIN = "https://longvo97-png.github.io"
+
+[[d1_databases]]
+binding = "RESULTS"
+database_name = "thithutncb-results"
+database_id = "00000000-0000-0000-0000-000000000000"

@@ -1,6 +1,6 @@
 # Русский — Website luyện 20 đề Tiếng Nga cơ bản
 
-Website tĩnh chạy trực tiếp trên **GitHub Pages**, thiết kế mobile-first, không cần database, backend, đăng nhập hay công cụ build. Toàn bộ 20 đề được trích xuất từ tệp Word được cung cấp (**20 × 45 = 900 câu**). Mỗi đề gồm 5 phần: chọn đáp án, nối câu, chọn câu hỏi cho phần gạch chân, đọc hiểu và chọn câu từ các từ cho trước.
+Website tĩnh chạy trực tiếp trên **GitHub Pages**, thiết kế mobile-first, phần làm bài chạy không cần công cụ build. Chức năng gửi điểm cho giáo viên dùng dịch vụ riêng. Toàn bộ 20 đề được trích xuất từ tệp Word được cung cấp (**20 × 45 = 900 câu**). Mỗi đề gồm 5 phần: chọn đáp án, nối câu, chọn câu hỏi cho phần gạch chân, đọc hiểu và chọn câu từ các từ cho trước.
 
 ## Đưa website lên GitHub Pages
 
@@ -18,13 +18,13 @@ Không tải riêng ZIP lên repository mà không giải nén. Không cần npm
 
 ## Sử dụng
 
-- Chọn đề → chọn phần I–V → làm từng câu; chuyển bằng nút **Trước / Câu tiếp**, thanh phần học hoặc bảng số câu.
+- Chọn đề → nhập họ và tên → chọn phần I–V → làm từng câu; chuyển bằng nút **Trước / Câu tiếp**, thanh phần học hoặc bảng số câu.
 - Cả 45 câu đều chọn phương án. Sau mỗi lần chọn, trang tự chuyển sang câu kế tiếp. Cuối mỗi phần, hộp thoại hiện yêu cầu của phần tiếp theo và nút bắt đầu. Chọn ở câu 45 sẽ mở Tổng kết để bạn kiểm tra và nộp bài. Câu 26–35 giữ phần gạch chân của Word.
 - Có đồng hồ tự bấm giờ (không phải thời gian thi quy định), đánh dấu xem lại, chỉnh cỡ chữ, sáng/tối.
 - Bài làm được **lưu tại trình duyệt trên thiết bị** qua `localStorage`. Không tự động đồng bộ giữa các điện thoại hoặc khi học sinh dùng trình duyệt riêng tư/xóa dữ liệu.
 - Sau khi nộp bài, **Tổng kết** hiển thị điểm trên thang 100 và mục **Ôn ngữ pháp theo đề** với quy tắc, ví dụ và liên kết đến các câu liên quan.
 - **Tổng kết** → **Tải bài làm .txt** để gửi giáo viên. **Cài đặt** → **Xuất dữ liệu .json** để sao lưu cả 20 đề hoặc chuyển máy; có thể nhập lại JSON đó.
-- Cài đặt → **Tên học sinh** để ghi tên trên file `.txt`.
+- Họ tên được ghi riêng cho từng bài và có trên trang Tổng kết, tệp `.txt`. Mục **Cài đặt → Tên học sinh** đổi tên điền sẵn cho lượt làm sau.
 
 ## Về đáp án và chấm điểm
 
@@ -84,4 +84,4 @@ Script sẽ sinh lại `data/exams.json`, báo lỗi nếu thiếu câu hoặc c
 
 ---
 
-Dành cho giáo viên: có thể yêu cầu học sinh xuất bản `.txt` để nhận bài qua email, nhóm học tập hoặc công cụ do lớp sử dụng. Website không tự nhận bài từ xa.
+Dành cho giáo viên: có thể yêu cầu học sinh xuất bản `.txt` để nhận bài qua email, nhóm học tập hoặc công cụ do lớp sử dụng. Giáo viên có thể bật nhận kết quả trực tiếp theo hướng dẫn trong [results/README.md](results/README.md).
