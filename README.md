@@ -30,7 +30,7 @@ Không tải riêng ZIP lên repository mà không giải nén. Không cần npm
 
 Trang dùng bộ đáp án Word cho 20 đề. Thang điểm 100 theo tệp đáp án, gồm 2 điểm cho mỗi câu phần I, II, III và V, cùng 4 điểm cho mỗi câu phần IV. Câu sai hoặc chưa chọn được 0 điểm. Tiến độ `x/45` là số câu đã chọn phương án.
 
-Sau khi xác nhận nộp bài, trang hiện điểm, số câu đúng, đáp án từng câu và mục ôn ngữ pháp. Có thể tải bài đã nộp hoặc làm lại đề. Bài tự luận cũ đã lưu vẫn xem và tải được. Các câu đó cần chọn phương án khi làm lại để được chấm tự động.
+Sau khi xác nhận nộp bài, trang hiện điểm và mục ôn ngữ pháp. Mục xem lại hiển thị đủ câu hỏi, các phương án, lời giải thích hoặc gợi ý đối chiếu. Câu đúng có màu xanh, câu sai có màu đỏ và câu chưa chọn có nhãn riêng. Có thể tải bài đã nộp hoặc làm lại đề. Bài tự luận cũ đã lưu vẫn xem và tải được. Các câu đó cần chọn phương án khi làm lại để được chấm tự động.
 
 Giáo viên có thể nhập khóa JSON sửa đổi cục bộ trong **Cài đặt** từ mẫu `data/answer-key-template.json`. Câu 21–25 dùng **а, б, в, г, д**. Các câu khác dùng **А, Б, В, Г**. File khóa trên GitHub Pages có thể đọc công khai. Trang dùng để luyện tập.
 

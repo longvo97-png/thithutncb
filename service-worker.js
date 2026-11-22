@@ -1,6 +1,6 @@
 /* All paths are relative to the deployed GitHub Pages repository subdirectory. */
-const CACHE_NAME='russian-practice-v5';
-const URLS=['./','./index.html','./assets/app.js','./assets/grammar.js','./assets/styles.css','./assets/icon.svg','./assets/icon-180.png','./assets/icon-192.png','./assets/icon-512.png','./data/exams.json','./data/converted-questions.json','./data/answer-key.json','./data/answer-key-template.json','./manifest.webmanifest'];
+const CACHE_NAME='russian-practice-v6';
+const URLS=['./','./index.html','./assets/app.js','./assets/grammar.js','./assets/review.js','./assets/styles.css','./assets/icon.svg','./assets/icon-180.png','./assets/icon-192.png','./assets/icon-512.png','./data/exams.json','./data/converted-questions.json','./data/answer-key.json','./data/answer-key-template.json','./manifest.webmanifest'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(URLS)).then(()=>self.skipWaiting()));
 });

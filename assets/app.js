@@ -1,4 +1,5 @@
 import {grammarReview} from './grammar.js';
+import {explainAnswer} from './review.js';
 
 const app = document.querySelector('#app');
 const storageKey = 'russian-practice-v1';
@@ -326,6 +327,57 @@ function showGrammar(main) {
   main.append(review);
 }
 
+function showAnswerReview(main, data, keys) {
+  const review = el('section', undefined, {'aria-labelledby': 'answer-review-title'});
+  review.append(el('h2', 'Xem lại toàn bộ bài làm', {id: 'answer-review-title', tabindex: '-1'}));
+  for (const [start, end, roman, name] of sections) {
+    const group = el('section', undefined, {class: 'review-section', 'aria-labelledby': `review-part-${roman}`});
+    group.append(el('h3', `Phần ${roman} · ${name}`, {id: `review-part-${roman}`}));
+    if (start === 36) {
+      const passage = el('div', undefined, {class: 'passage', lang: 'ru'});
+      for (const paragraph of exam.reading) passage.append(el('p', paragraph));
+      group.append(passage);
+    }
+    for (const question of exam.questions.slice(start - 1, end)) {
+      const n = question.number;
+      const options = choicesFor(question);
+      const value = data.answers[n];
+      const key = keys[n];
+      const chosen = Object.hasOwn(options, value);
+      const result = chosen ? (value === key ? 'correct' : 'incorrect') : 'unanswered';
+      const label = {correct: 'Đúng', incorrect: 'Sai', unanswered: value?.trim() ? 'Bài tự luận cũ' : 'Chưa chọn'}[result];
+      const card = el('article', undefined, {class: 'card review-question', 'data-result': result});
+      const title = el('h4', `Câu ${n}`);
+      const heading = el('div', undefined, {class: 'row spread'});
+      heading.append(title, el('span', label, {class: 'review-badge'}));
+      card.append(heading, questionText(question));
+      if (!chosen && value?.trim()) card.append(el('p', value, {lang: 'ru'}));
+      const list = el('ul', undefined, {class: 'review-options'});
+      for (const [letter, option] of Object.entries(options)) {
+        const correct = letter === key;
+        const selected = letter === value;
+        const item = el('li', undefined, {
+          class: correct ? 'review-option-correct' : selected ? 'review-option-incorrect' : '',
+        });
+        item.append(el('span', `${letter}. ${option}`, {lang: 'ru'}));
+        if (correct || selected) {
+          const status = correct && selected ? 'Đã chọn · Đáp án đúng' : correct ? 'Đáp án đúng' : 'Đã chọn';
+          item.append(el('strong', status));
+        }
+        list.append(item);
+      }
+      const explanation = explainAnswer(exam, question, options[key], key === publishedKeys[exam.id][n]);
+      const note = el('div', undefined, {class: 'review-explanation'});
+      note.append(el('strong', 'Giải thích'), el('p', explanation.reason));
+      if (explanation.example) note.append(el('p', explanation.example, {lang: 'ru'}));
+      card.append(list, note);
+      group.append(card);
+    }
+    review.append(group);
+  }
+  main.append(review);
+}
+
 function summary(main) {
   const data = record();
   const answered = count(data);
@@ -345,7 +397,10 @@ function summary(main) {
     main.append(el('p', 'Sau khi nộp bài, trang sẽ hiện điểm của cả 45 câu và nội dung ôn ngữ pháp.', {class: 'muted'}));
   }
   const controls = el('div', undefined, {class: 'row controls'});
-  controls.append(button('Xem lại bài', () => navigate('question')),
+  controls.append(button('Xem lại bài', () => {
+    if (!data.complete) navigate('question');
+    else main.querySelector('#answer-review-title').focus();
+  }),
     button('Tải bài làm .txt', () => {
       const rows = exam.questions.map(question => {
       const value = data.answers[question.number];
@@ -370,24 +425,20 @@ function summary(main) {
     }));
   }
   main.append(controls);
-  if (data.complete) showGrammar(main);
+  if (data.complete) {
+    showGrammar(main);
+    showAnswerReview(main, data, keys);
+    return;
+  }
   const list = el('ol', undefined, {class: 'summary-list'});
   for (const question of exam.questions) {
     const {number} = question;
     const row = el('li');
-    const key = data.complete ? keys[number] : '';
     const value = data.answers[number];
     const options = choicesFor(question);
     const chosen = Object.hasOwn(options, value) ? options[value] : undefined;
     row.append(button(`Câu ${number}`, () => chooseQuestion(number)),
       el('span', chosen ? `${value}. ${chosen}` : value?.trim() || 'Chưa chọn', {lang: value?.trim() ? 'ru' : 'vi'}));
-    if (key) {
-      const result = value === key ? 'Đúng' : 'Đáp án';
-      row.append(el('span', `${result} · ${key}. ${options[key]}`, {class: 'muted'}));
-      if (exam.id === 1 && number === 39) {
-        row.append(el('span', 'Khóa đáp án suy luận từ chi tiết Oleg là cầu thủ bóng đá.', {class: 'muted'}));
-      }
-    }
     if (data.marked.includes(number)) row.append(el('span', '★', {'aria-label': 'Đã đánh dấu'}));
     list.append(row);
   }
