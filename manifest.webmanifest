@@ -1,0 +1,31 @@
+{
+  "name": "Русский — 20 đề luyện thi Tiếng Nga cơ bản",
+  "short_name": "Luyện Tiếng Nga",
+  "description": "900 câu hỏi luyện tập từ 20 đề tiếng Nga cơ bản, tự lưu tiến độ",
+  "lang": "vi",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6fb",
+  "theme_color": "#101a35",
+  "icons": [
+    {
+      "src": "./assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

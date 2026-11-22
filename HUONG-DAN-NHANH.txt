@@ -1,0 +1,19 @@
+WEBSITE LUYỆN 20 ĐỀ TIẾNG NGA - HƯỚNG DẪN NHANH
+
+1. GIẢI NÉN tệp ZIP vừa tải xuống.
+2. Tạo repository GitHub (ví dụ: luyen-tieng-nga).
+3. Kéo THẲNG các tệp index.html, README.md, thư mục assets và data...
+   lên THƯ MỤC GỐC của repository (không tải cả thư mục lồng nhau).
+4. Vào Settings > Pages > Deploy from a branch > main > /(root) > Save.
+5. Mở URL GitHub Pages mà GitHub cung cấp, ví dụ:
+   https://TEN-TAI-KHOAN.github.io/luyen-tieng-nga/
+6. Sao chép URL và gửi cho học sinh qua nhóm lớp.
+
+Học sinh: chọn đề -> chọn phần -> làm từng câu -> Tổng kết ->
+Tải bài làm .txt để gửi giáo viên. Mỗi câu được tự lưu trên thiết bị.
+
+QUAN TRỌNG: Tài liệu Word không có đáp án chính thức, vì vậy trang
+không tự tính điểm đúng/sai khi chưa được giáo viên bổ sung khóa đáp án.
+Có thể nhập đáp án theo data/answer-key-template.json.
+
+Xem README.md nếu cần hướng dẫn đầy đủ.
