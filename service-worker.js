@@ -1,6 +1,6 @@
 /* All paths are relative to the deployed GitHub Pages repository subdirectory. */
-const CACHE_NAME='russian-practice-v3';
-const URLS=['./','./index.html','./assets/app.js','./assets/grammar.js','./assets/styles.css','./assets/icon.svg','./assets/icon-180.png','./assets/icon-192.png','./assets/icon-512.png','./data/exams.json','./data/answer-key-template.json','./manifest.webmanifest'];
+const CACHE_NAME='russian-practice-v4';
+const URLS=['./','./index.html','./assets/app.js','./assets/grammar.js','./assets/styles.css','./assets/icon.svg','./assets/icon-180.png','./assets/icon-192.png','./assets/icon-512.png','./data/exams.json','./data/converted-questions.json','./data/answer-key.json','./data/answer-key-template.json','./manifest.webmanifest'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(URLS)).then(()=>self.skipWaiting()));
 });
@@ -14,10 +14,9 @@ self.addEventListener('fetch',event=>{
    const cache=await caches.open(CACHE_NAME);
    try {
      const response=await fetch(event.request);
-     if(response.ok && (URLS.some(path => new URL(path,self.registration.scope).href === event.request.url) || requestURL.pathname.endsWith('/data/answer-key.json'))) {
+     if(response.ok && URLS.some(path => new URL(path,self.registration.scope).href === event.request.url)) {
        await cache.put(event.request,response.clone()).catch(() => {});
      }
-     if(response.status===404 && requestURL.pathname.endsWith('/data/answer-key.json'))await cache.delete(event.request).catch(() => {});
      return response;
    }catch{
      return (await cache.match(event.request))|| (event.request.mode==='navigate'?await cache.match('./index.html'):Response.error());

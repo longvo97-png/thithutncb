@@ -1,6 +1,6 @@
 # Русский — Website luyện 20 đề Tiếng Nga cơ bản
 
-Website tĩnh chạy trực tiếp trên **GitHub Pages**, thiết kế mobile-first, không cần database, backend, đăng nhập hay công cụ build. Toàn bộ 20 đề được trích xuất từ tệp Word được cung cấp (**20 × 45 = 900 câu**). Mỗi đề gồm 5 phần: chọn đáp án, nối câu, đặt câu hỏi cho phần gạch chân, đọc hiểu và viết câu từ các từ cho trước.
+Website tĩnh chạy trực tiếp trên **GitHub Pages**, thiết kế mobile-first, không cần database, backend, đăng nhập hay công cụ build. Toàn bộ 20 đề được trích xuất từ tệp Word được cung cấp (**20 × 45 = 900 câu**). Mỗi đề gồm 5 phần: chọn đáp án, nối câu, chọn câu hỏi cho phần gạch chân, đọc hiểu và chọn câu từ các từ cho trước.
 
 ## Đưa website lên GitHub Pages
 
@@ -19,25 +19,20 @@ Không tải riêng ZIP lên repository mà không giải nén. Không cần npm
 ## Sử dụng
 
 - Chọn đề → chọn phần I–V → làm từng câu; chuyển bằng nút **Trước / Câu tiếp**, thanh phần học hoặc bảng số câu.
-- Câu 1–25 tự chuyển sang câu kế tiếp khi bạn chọn đáp án. Câu tự luận dùng ô nhập tiếng Nga và chuyển bằng nút **Câu tiếp**. Phần gạch chân ở câu 26–35 giữ đúng đánh dấu của Word.
+- Cả 45 câu đều chọn phương án. Sau mỗi lần chọn, trang tự chuyển sang câu kế tiếp. Chọn ở câu 45 sẽ mở Tổng kết để bạn kiểm tra và nộp bài. Câu 26–35 giữ phần gạch chân của Word.
 - Có đồng hồ tự bấm giờ (không phải thời gian thi quy định), đánh dấu xem lại, chỉnh cỡ chữ, sáng/tối.
 - Bài làm được **lưu tại trình duyệt trên thiết bị** qua `localStorage`. Không tự động đồng bộ giữa các điện thoại hoặc khi học sinh dùng trình duyệt riêng tư/xóa dữ liệu.
-- Sau khi nộp bài, **Tổng kết** hiển thị điểm trên số câu có khóa đáp án và mục **Ôn ngữ pháp theo đề** với quy tắc, ví dụ và liên kết đến các câu liên quan.
+- Sau khi nộp bài, **Tổng kết** hiển thị điểm trên thang 100 và mục **Ôn ngữ pháp theo đề** với quy tắc, ví dụ và liên kết đến các câu liên quan.
 - **Tổng kết** → **Tải bài làm .txt** để gửi giáo viên. **Cài đặt** → **Xuất dữ liệu .json** để sao lưu cả 20 đề hoặc chuyển máy; có thể nhập lại JSON đó.
 - Cài đặt → **Tên học sinh** để ghi tên trên file `.txt`.
 
 ## Về đáp án và chấm điểm
 
-**Tệp Word nguồn không có bảng đáp án.** Website cố ý **không suy đoán đáp án hoặc công bố điểm số giả**. Tiến độ `x/45` là **số câu đã trả lời**, không phải số câu đúng. Bài đã xác nhận hoàn thành được khóa để xem lại và xuất kết quả.
+Trang dùng bộ đáp án Word cho 20 đề. Thang điểm 100 theo tệp đáp án, gồm 2 điểm cho mỗi câu phần I, II, III và V, cùng 4 điểm cho mỗi câu phần IV. Câu sai hoặc chưa chọn được 0 điểm. Tiến độ `x/45` là số câu đã chọn phương án.
 
-Để kích hoạt đối chiếu câu 1–25 sau khi giáo viên đã kiểm tra đáp án:
+Sau khi xác nhận nộp bài, trang hiện điểm, số câu đúng, đáp án từng câu và mục ôn ngữ pháp. Có thể tải bài đã nộp hoặc làm lại đề. Bài tự luận cũ đã lưu vẫn xem và tải được. Các câu đó cần chọn phương án khi làm lại để được chấm tự động.
 
-1. Tải `data/answer-key-template.json` hoặc dùng trực tiếp file mẫu trong ZIP.
-2. Điền đáp án theo đề và số câu: `1`–`20` nhận ký tự **А, Б, В, Г** (chữ Kirin, không phải A/B Latin); `21`–`25` nhận **а, б, в, г, д**. Có thể nhập đáp án tham khảo cho câu 26–45, nhưng ứng dụng không tự chấm tự luận.
-3. Đổi tên file thành `answer-key.json`, đặt trong `data/` rồi đẩy lên GitHub cùng website **hoặc** giữ riêng và dùng **Cài đặt → Dành cho giáo viên → Nhập JSON đáp án** trên thiết bị có nhu cầu đối chiếu.
-4. Sau khi học sinh bấm **Xác nhận hoàn thành** tại trang Tổng kết, các câu có đáp án mới được so sánh. Website hiện điểm ngay, mỗi câu đúng được 1 điểm trên tổng số câu có khóa trong phần 1–25. Câu sai hoặc bỏ trống được 0 điểm. Với khóa đầy đủ, điểm tự động tối đa là 25. Các phần tự luận cần giáo viên chấm.
-
-**Cảnh báo**: `data/answer-key.json` trong repository Public là công khai. Cơ chế chỉ mở đáp án sau khi hoàn thành là quy ước giao diện, **không bảo mật đáp án**. Website chỉ phục vụ luyện tập, không dành cho kỳ thi giám sát hoặc chống gian lận.
+Giáo viên có thể nhập khóa JSON sửa đổi cục bộ trong **Cài đặt** từ mẫu `data/answer-key-template.json`. Câu 21–25 dùng **а, б, в, г, д**. Các câu khác dùng **А, Б, В, Г**. File khóa trên GitHub Pages có thể đọc công khai. Trang dùng để luyện tập.
 
 ## Cấu trúc
 
@@ -51,9 +46,11 @@ manifest.webmanifest           Cài lên màn hình chính (PWA)
 service-worker.js              Lưu bộ đệm offline sau lần tải thành công
 .nojekyll                      Bỏ qua xử lý Jekyll trên GitHub Pages
 data/exams.json                Đủ 20 đề × 45 câu, trích từ Word
-data/answer-key.json          Tùy chọn, không có sẵn vì Word thiếu đáp án
+data/answer-key.json           Khóa chấm cho toàn bộ 900 câu
+data/converted-questions.json  Phương án cho câu 26–45 của từng đề
 data/answer-key-template.json  Mẫu cho giáo viên (để trống)
-tools/extract_exams.py         Script trích xuất lại từ DOCX (thư viện chuẩn Python)
+tools/extract_exams.py         Script trích xuất câu hỏi từ DOCX
+tools/convert_answers.py      Script tạo phương án và khóa chấm từ DOCX đáp án
 extraction-audit.txt           Kết quả đối chiếu số lượng nội dung
 ```
 
@@ -70,8 +67,8 @@ Sau đó mở `http://localhost:8000`. Tránh nhấn đúp `index.html` trực t
 ## Chất lượng dữ liệu
 
 - Mỗi đề có **20 câu trắc nghiệm**, **5 câu nối**, **10 câu đặt câu hỏi**, **5 câu đọc hiểu**, **5 câu hoàn thành**.
-- Các đoạn văn đọc hiểu, phương án chữ Nga và định dạng gạch chân ở phần III đã được trích xuất từ Word.
-- **Nguyên văn nguồn được giữ lại**, kể cả một số lỗi chính tả hoặc câu có thể chưa thống nhất. Không ngầm thay đổi nội dung câu hỏi hoặc tạo đáp án.
+- Các đoạn văn đọc hiểu, phương án gốc và định dạng gạch chân ở phần III được trích xuất từ Word. Các phương án nhiễu câu 26–45 được tạo thêm từ bộ đáp án và từ các dạng từ trong câu gốc.
+- **Nguyên văn nguồn được giữ lại**, kể cả một số lỗi chính tả hoặc câu có thể chưa thống nhất. Phương án đúng được lấy từ bộ đáp án Word.
 - Không thu thập tài khoản hoặc bài làm lên server. Không dùng thư viện JavaScript, font hay dịch vụ CDN bên ngoài.
 
 ### Cập nhật nguồn DOCX
@@ -79,7 +76,8 @@ Sau đó mở `http://localhost:8000`. Tránh nhấn đúp `index.html` trực t
 Có thể trích xuất lại bằng:
 
 ```bash
-python3 tools/extract_exams.py "duong-dan-den-file.docx"
+python3 tools/extract_exams.py "de-goc.docx"
+python3 tools/convert_answers.py "dap-an.docx"
 ```
 
 Script sẽ sinh lại `data/exams.json`, báo lỗi nếu thiếu câu hoặc có bất thường ở lựa chọn А/Б/В/Г. Cần chạy thử giao diện sau khi thay nguồn.

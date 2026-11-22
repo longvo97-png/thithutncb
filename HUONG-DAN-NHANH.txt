@@ -9,11 +9,8 @@ WEBSITE LUYỆN 20 ĐỀ TIẾNG NGA - HƯỚNG DẪN NHANH
    https://TEN-TAI-KHOAN.github.io/luyen-tieng-nga/
 6. Sao chép URL và gửi cho học sinh qua nhóm lớp.
 
-Học sinh: chọn đề -> chọn phần -> làm từng câu -> Tổng kết ->
-Tải bài làm .txt để gửi giáo viên. Mỗi câu được tự lưu trên thiết bị.
-
-QUAN TRỌNG: Tài liệu Word không có đáp án chính thức, vì vậy trang
-không tự tính điểm đúng/sai khi chưa được giáo viên bổ sung khóa đáp án.
-Có thể nhập đáp án theo data/answer-key-template.json.
+Học sinh: chọn đề, chọn phương án ở từng câu rồi xác nhận nộp tại Tổng kết.
+Điểm trên thang 100, đáp án và phần ôn ngữ pháp hiện ngay sau khi nộp.
+Bài làm lưu trên thiết bị và có thể tải xuống dưới dạng .txt.
 
 Xem README.md nếu cần hướng dẫn đầy đủ.

@@ -5,9 +5,9 @@ const storageKey = 'russian-practice-v1';
 const sections = [
   [1, 20, 'I', 'Chọn đáp án'],
   [21, 25, 'II', 'Nối câu'],
-  [26, 35, 'III', 'Đặt câu hỏi cho phần gạch chân'],
+  [26, 35, 'III', 'Chọn câu hỏi cho phần gạch chân'],
   [36, 40, 'IV', 'Đọc hiểu'],
-  [41, 45, 'V', 'Viết câu'],
+  [41, 45, 'V', 'Chọn câu dùng đủ các từ cho sẵn'],
 ];
 
 function el(tag, text, attrs = {}) {
@@ -27,7 +27,11 @@ function emptyState() {
   return {name: '', theme: 'light', size: 'normal', exams: {}, keys: {}};
 }
 
-function normalizeKeys(input) {
+function validChoice(number, answer) {
+  return (number >= 21 && number <= 25 ? /^[абвгд]$/ : /^[АБВГ]$/).test(answer ?? '');
+}
+
+function normalizeKeys(input, allowLegacy = false) {
   const keys = {};
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw Error();
   for (const [id, answers] of Object.entries(input)) {
@@ -37,7 +41,10 @@ function normalizeKeys(input) {
       if (!/^(?:[1-9]|[1-3]\d|4[0-5])$/.test(number) || typeof value !== 'string') throw Error();
       const answer = value.trim();
       if (!answer) continue;
-      if (Number(number) <= 25 && !(Number(number) <= 20 ? /^[АБВГ]$/ : /^[абвгд]$/).test(answer)) throw Error();
+      if (!validChoice(Number(number), answer)) {
+        if (allowLegacy && Number(number) > 25) continue;
+        throw Error();
+      }
       keys[id][number] = answer;
     }
   }
@@ -50,7 +57,7 @@ function normalizeState(input) {
   result.name = typeof input.name === 'string' ? input.name.slice(0, 120) : '';
   result.theme = input.theme === 'dark' ? 'dark' : 'light';
   result.size = input.size === 'large' ? 'large' : 'normal';
-  result.keys = normalizeKeys(input.keys ?? {});
+  result.keys = normalizeKeys(input.keys ?? {}, true);
   for (const [id, item] of Object.entries(input.exams)) {
     if (!/^(?:[1-9]|1\d|20)$/.test(id) || !item || typeof item !== 'object') throw Error();
     const answers = {};
@@ -82,6 +89,10 @@ let publishedKeys = {};
 
 function answerKeys(id) {
   return {...publishedKeys[id], ...state.keys[id]};
+}
+
+function choicesFor(question) {
+  return question.choices ?? exam.matching;
 }
 let exam = null;
 let page = 'home';
@@ -141,7 +152,7 @@ function chooseQuestion(n) {
 }
 
 function count(data) {
-  return Object.values(data?.answers ?? {}).filter(answer => answer.trim()).length;
+  return Object.entries(data?.answers ?? {}).filter(([n, answer]) => validChoice(Number(n), answer)).length;
 }
 
 function download(name, text, mime) {
@@ -184,7 +195,7 @@ function questionPage(main) {
   const n = data.current;
   const question = exam.questions[n - 1];
   const section = sections.find(([start, end]) => n >= start && n <= end);
-  const progress = el('span', `${count(data)}/45 đã trả lời`, {id: 'progress-label'});
+  const progress = el('span', `${count(data)}/45 đã chọn`);
   timer = el('span', undefined, {class: 'timer', 'aria-label': 'Thời gian làm bài'});
   const meta = el('div', undefined, {class: 'row spread muted'});
   meta.append(progress, timer);
@@ -202,31 +213,22 @@ function questionPage(main) {
     card.append(passage);
   }
   card.append(questionText(question));
-  function answer(value) {
-    data.answers[n] = value;
-    progress.textContent = `${count(data)}/45 đã trả lời`;
-    jump.classList.toggle('answered', Boolean(value.trim()));
-    save();
+  const oldAnswer = data.answers[n];
+  if (oldAnswer?.trim() && !validChoice(n, oldAnswer)) {
+    card.append(el('p', `Câu trả lời đã lưu trước đây: ${oldAnswer}`, {class: 'muted'}));
   }
-  if (n <= 25) {
-    const choices = el('fieldset', undefined, {class: 'choices'});
-    choices.append(el('legend', n <= 20 ? 'Đáp án' : 'Câu trả lời phù hợp', {class: 'sr-only'}));
-    for (const [key, value] of Object.entries(question.choices ?? exam.matching)) {
-      const option = button(`${key}. ${value}`, () => {
-        answer(key);
-        chooseQuestion(n + 1);
-      }, {lang: 'ru', 'aria-pressed': String(data.answers[n] === key)});
-      option.disabled = data.complete;
-      choices.append(option);
-    }
-    card.append(choices);
-  } else {
-    const input = el('textarea', undefined, {id: 'answer', lang: 'ru', rows: '3', spellcheck: 'false'});
-    input.value = data.answers[n] ?? '';
-    input.readOnly = data.complete;
-    input.addEventListener('input', () => answer(input.value));
-    card.append(el('label', 'Câu trả lời của bạn', {for: 'answer'}), input);
+  const choices = el('fieldset', undefined, {class: 'choices'});
+  choices.append(el('legend', 'Các phương án', {class: 'sr-only'}));
+  for (const [key, value] of Object.entries(choicesFor(question))) {
+    const option = button(`${key}. ${value}`, () => {
+      data.answers[n] = key;
+      if (n === 45) navigate('summary');
+      else chooseQuestion(n + 1);
+    }, {lang: 'ru', 'aria-pressed': String(oldAnswer === key)});
+    option.disabled = data.complete;
+    choices.append(option);
   }
+  card.append(choices);
 
   const controls = el('div', undefined, {class: 'row spread controls'});
   const previous = button('← Trước', () => chooseQuestion(n - 1));
@@ -247,7 +249,7 @@ function questionPage(main) {
   let jump;
   for (const {number} of exam.questions) {
     const entry = button(String(number), () => chooseQuestion(number), {'aria-label': `Câu ${number}`});
-    entry.classList.toggle('answered', Boolean(data.answers[number]?.trim()));
+    entry.classList.toggle('answered', validChoice(number, data.answers[number]));
     entry.classList.toggle('marked', data.marked.includes(number));
     if (number === n) {
       entry.setAttribute('aria-current', 'true');
@@ -261,9 +263,15 @@ function questionPage(main) {
 }
 
 function grade(data, keys) {
-  const graded = Object.keys(keys).map(Number).filter(n => n <= 25);
-  const correct = graded.filter(n => data.answers[n]?.trim() === keys[n]).length;
-  return {graded: graded.length, correct};
+  let points = 0;
+  let correct = 0;
+  for (const [number, key] of Object.entries(keys)) {
+    if (data.answers[number] === key) {
+      correct++;
+      points += Number(number) >= 36 && Number(number) <= 40 ? 4 : 2;
+    }
+  }
+  return {points, correct};
 }
 
 function showGrammar(main) {
@@ -284,48 +292,64 @@ function showGrammar(main) {
 function summary(main) {
   const data = record();
   const answered = count(data);
-  main.append(el('h1', `Tổng kết đề ${exam.id}`), el('p', `${answered}/45 đã trả lời · ${45 - answered} câu bỏ trống`));
+  main.append(el('h1', `Tổng kết đề ${exam.id}`), el('p', `${answered}/45 đã chọn phương án`));
   const keys = answerKeys(exam.id);
   const score = grade(data, keys);
   if (data.complete) {
     const result = el('section', undefined, {class: 'card score', 'aria-labelledby': 'score-title'});
     result.append(el('h2', 'Kết quả chấm tự động', {id: 'score-title'}));
-    if (score.graded) {
-      result.append(el('p', `${score.correct}/${score.graded} điểm`, {class: 'score-value'}),
-        el('p', `${score.graded}/25 câu chọn đáp án và nối câu có khóa chấm. Câu tự luận cần giáo viên chấm.`, {class: 'muted'}));
-    } else {
-      result.append(el('p', 'Chưa có điểm vì đề này chưa có khóa đáp án. Sau khi giáo viên nhập khóa, điểm sẽ hiện tại đây.'));
+    result.append(el('p', `${score.points}/100 điểm`, {class: 'score-value'}),
+      el('p', `${score.correct}/45 câu đúng · Đọc hiểu 4 điểm/câu, các phần còn lại 2 điểm/câu.`, {class: 'muted'}));
+    if (Object.entries(data.answers).some(([number, value]) => value.trim() && !validChoice(Number(number), value))) {
+      result.append(el('p', 'Bài cũ có câu trả lời tự luận được giữ lại để xem và xuất bài. Để chấm các câu này, hãy làm lại đề và chọn phương án.'));
     }
     main.append(result);
   } else {
-    main.append(el('p', 'Sau khi nộp bài, trang sẽ hiện điểm phần có khóa đáp án và nội dung ôn ngữ pháp.', {class: 'muted'}));
+    main.append(el('p', 'Sau khi nộp bài, trang sẽ hiện điểm của cả 45 câu và nội dung ôn ngữ pháp.', {class: 'muted'}));
   }
   const controls = el('div', undefined, {class: 'row controls'});
   controls.append(button('Xem lại bài', () => navigate('question')),
     button('Tải bài làm .txt', () => {
-      const rows = exam.questions.map(({number}) => `${number}. ${data.answers[number]?.trim() || '—'}`);
-      download(`bai-lam-de-${exam.id}.txt`, [`Đề ${exam.id}`, `Họ tên: ${state.name || '—'}`, `Đã trả lời: ${answered}/45`, '', ...rows].join('\n'), 'text/plain;charset=utf-8');
+      const rows = exam.questions.map(question => {
+      const value = data.answers[question.number];
+      const choice = Object.hasOwn(choicesFor(question), value) ? choicesFor(question)[value] : undefined;
+      return `${question.number}. ${choice ? `${value}. ${choice}` : value?.trim() || '—'}`;
+    });
+      download(`bai-lam-de-${exam.id}.txt`, [`Đề ${exam.id}`, `Họ tên: ${state.name || '—'}`, `Đã chọn: ${answered}/45`, ...(data.complete ? [`Điểm: ${score.points}/100`] : []), '', ...rows].join('\n'), 'text/plain;charset=utf-8');
     }));
   if (!data.complete) {
     controls.append(button('Xác nhận hoàn thành', () => {
-      if (!window.confirm(`Hoàn thành đề ${exam.id} với ${45 - answered} câu bỏ trống? Sau khi xác nhận, bài làm sẽ được khóa.`)) return;
+      if (!window.confirm(`Hoàn thành đề ${exam.id} với ${45 - answered} câu chưa chọn phương án? Sau khi xác nhận, bài làm sẽ được khóa.`)) return;
       timerBase = elapsed();
       timerStarted = null;
       data.complete = true;
       navigate('summary');
     }, {class: 'primary'}));
+  } else {
+    controls.append(button('Làm lại đề', () => {
+      if (!window.confirm('Bắt đầu lại và xóa bài làm đã lưu của đề này? Bạn có thể tải bài cũ trước.')) return;
+      delete state.exams[exam.id];
+      openExam(exam);
+    }));
   }
   main.append(controls);
   if (data.complete) showGrammar(main);
   const list = el('ol', undefined, {class: 'summary-list'});
-  for (const {number} of exam.questions) {
+  for (const question of exam.questions) {
+    const {number} = question;
     const row = el('li');
     const key = data.complete ? keys[number] : '';
+    const value = data.answers[number];
+    const options = choicesFor(question);
+    const chosen = Object.hasOwn(options, value) ? options[value] : undefined;
     row.append(button(`Câu ${number}`, () => chooseQuestion(number)),
-      el('span', data.answers[number]?.trim() || 'Chưa trả lời', {lang: data.answers[number]?.trim() ? 'ru' : 'vi'}));
+      el('span', chosen ? `${value}. ${chosen}` : value?.trim() || 'Chưa chọn', {lang: value?.trim() ? 'ru' : 'vi'}));
     if (key) {
-      const result = number > 25 ? 'Đáp án tham khảo' : data.answers[number]?.trim() === key ? 'Đúng' : '0 điểm · Đáp án';
-      row.append(el('span', `${result} · ${key}`, {class: 'muted'}));
+      const result = value === key ? 'Đúng' : 'Đáp án';
+      row.append(el('span', `${result} · ${key}. ${options[key]}`, {class: 'muted'}));
+      if (exam.id === 1 && number === 39) {
+        row.append(el('span', 'Khóa đáp án suy luận từ chi tiết Oleg là cầu thủ bóng đá.', {class: 'muted'}));
+      }
     }
     if (data.marked.includes(number)) row.append(el('span', '★', {'aria-label': 'Đã đánh dấu'}));
     list.append(row);
@@ -421,17 +445,30 @@ function render(focus = false) {
   }
 }
 
-try {
-  const response = await fetch('./data/exams.json');
+async function loadJson(path) {
+  const response = await fetch(path);
   if (!response.ok) throw Error(response.status);
-  exams = await response.json();
-  if (!Array.isArray(exams) || !exams.length) throw Error('Empty exam bank');
+  return response.json();
+}
+
+try {
+  const [bank, converted, keys] = await Promise.all([
+    loadJson('./data/exams.json'),
+    loadJson('./data/converted-questions.json'),
+    loadJson('./data/answer-key.json'),
+  ]);
+  publishedKeys = normalizeKeys(keys);
+  if (bank.length !== 20) throw Error('Incomplete exam bank');
+  for (const item of bank) {
+    if (item.questions.length !== 45) throw Error('Incomplete exam');
+    for (const question of item.questions) {
+      if (question.number > 25) question.choices = converted[item.id]?.[question.number];
+      const options = question.choices ?? (question.number >= 21 && question.number <= 25 ? item.matching : {});
+      if (!Object.hasOwn(options, publishedKeys[item.id]?.[question.number])) throw Error('Incomplete answer key');
+    }
+  }
+  exams = bank;
   render();
-  fetch('./data/answer-key.json', {signal: AbortSignal.timeout(5000)}).then(response => response.ok ? response.json() : null).then(keys => {
-    if (!keys) return;
-    publishedKeys = normalizeKeys(keys);
-    if (page === 'summary') render();
-  }).catch(() => {});
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js').catch(error => console.warn('Offline:', error));
   setInterval(updateTimer, 1000);
   setInterval(() => { if (timerStarted !== null) save(); }, 15000);
