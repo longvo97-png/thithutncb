@@ -547,8 +547,8 @@ function summary(main) {
   }
   main.append(controls);
   if (data.complete) {
-    showGrammar(main);
     showAnswerReview(main, data, keys);
+    showGrammar(main);
     return;
   }
   const list = el('ol', undefined, {class: 'summary-list'});
