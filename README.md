@@ -19,7 +19,7 @@ Không tải riêng ZIP lên repository mà không giải nén. Không cần npm
 ## Sử dụng
 
 - Chọn đề → chọn phần I–V → làm từng câu; chuyển bằng nút **Trước / Câu tiếp**, thanh phần học hoặc bảng số câu.
-- Cả 45 câu đều chọn phương án. Sau mỗi lần chọn, trang tự chuyển sang câu kế tiếp. Chọn ở câu 45 sẽ mở Tổng kết để bạn kiểm tra và nộp bài. Câu 26–35 giữ phần gạch chân của Word.
+- Cả 45 câu đều chọn phương án. Sau mỗi lần chọn, trang tự chuyển sang câu kế tiếp. Cuối mỗi phần, hộp thoại hiện yêu cầu của phần tiếp theo và nút bắt đầu. Chọn ở câu 45 sẽ mở Tổng kết để bạn kiểm tra và nộp bài. Câu 26–35 giữ phần gạch chân của Word.
 - Có đồng hồ tự bấm giờ (không phải thời gian thi quy định), đánh dấu xem lại, chỉnh cỡ chữ, sáng/tối.
 - Bài làm được **lưu tại trình duyệt trên thiết bị** qua `localStorage`. Không tự động đồng bộ giữa các điện thoại hoặc khi học sinh dùng trình duyệt riêng tư/xóa dữ liệu.
 - Sau khi nộp bài, **Tổng kết** hiển thị điểm trên thang 100 và mục **Ôn ngữ pháp theo đề** với quy tắc, ví dụ và liên kết đến các câu liên quan.

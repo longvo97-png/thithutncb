@@ -122,3 +122,14 @@ textarea { resize: vertical; }
 .grammar details { border-top: 1px solid var(--line); padding-block: .5rem; }
 .grammar summary { cursor: pointer; font-weight: 650; padding-block: .5rem; }
 .grammar details .row button { min-width: 44px; }
+
+.section-intro {
+  width: min(100% - 2rem, 34rem);
+  padding: clamp(1rem, 5vw, 1.75rem);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+}
+.section-intro::backdrop { background: rgb(10 18 35 / 65%); }
+.section-intro .row { justify-content: flex-end; margin-top: 1.25rem; }

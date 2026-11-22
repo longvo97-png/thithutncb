@@ -4,10 +4,10 @@ const app = document.querySelector('#app');
 const storageKey = 'russian-practice-v1';
 const sections = [
   [1, 20, 'I', 'Chọn đáp án'],
-  [21, 25, 'II', 'Nối câu'],
-  [26, 35, 'III', 'Chọn câu hỏi cho phần gạch chân'],
-  [36, 40, 'IV', 'Đọc hiểu'],
-  [41, 45, 'V', 'Chọn câu dùng đủ các từ cho sẵn'],
+  [21, 25, 'II', 'Nối câu', 'Chọn câu trả lời phù hợp ở cột Б cho mỗi câu hỏi ở cột А.'],
+  [26, 35, 'III', 'Chọn câu hỏi cho phần gạch chân', 'Hãy đặt câu hỏi cho từ hoặc cụm từ được gạch chân bằng cách chọn phương án phù hợp.'],
+  [36, 40, 'IV', 'Đọc hiểu', 'Đọc đoạn văn, rồi chọn câu trả lời phù hợp với nội dung đoạn văn.'],
+  [41, 45, 'V', 'Chọn câu dùng đủ các từ cho sẵn', 'Chọn câu hoàn chỉnh dùng đủ các từ cho sẵn và biến đổi từ đúng ngữ pháp.'],
 ];
 
 function el(tag, text, attrs = {}) {
@@ -190,11 +190,41 @@ function questionText(question) {
   return prompt;
 }
 
+function sectionIntro(main, [start, end, roman, name, instruction]) {
+  const dialog = el('dialog', undefined, {
+    class: 'section-intro',
+    'aria-labelledby': 'section-intro-title',
+    'aria-describedby': 'section-intro-instructions',
+  });
+  const actions = el('div', undefined, {class: 'row'});
+  actions.append(button('Ở lại câu này', () => dialog.close()),
+    button(`Bắt đầu Phần ${roman}`, () => {
+      dialog.close();
+      chooseQuestion(start);
+    }, {class: 'primary', autofocus: ''}));
+  dialog.append(
+    el('h2', `Phần ${roman} · ${name}`, {id: 'section-intro-title'}),
+    el('p', `Câu ${start}–${end}`, {class: 'muted'}),
+    el('p', instruction, {id: 'section-intro-instructions'}),
+    actions,
+  );
+  dialog.addEventListener('close', () => dialog.remove(), {once: true});
+  main.append(dialog);
+  dialog.showModal();
+}
+
 function questionPage(main) {
   const data = record();
   const n = data.current;
   const question = exam.questions[n - 1];
   const section = sections.find(([start, end]) => n >= start && n <= end);
+  const nextSection = sections.find(([start]) => start === n + 1);
+
+  function advance() {
+    if (n === 45) navigate('summary');
+    else if (nextSection && !data.complete) sectionIntro(main, nextSection);
+    else chooseQuestion(n + 1);
+  }
   const progress = el('span', `${count(data)}/45 đã chọn`);
   timer = el('span', undefined, {class: 'timer', 'aria-label': 'Thời gian làm bài'});
   const meta = el('div', undefined, {class: 'row spread muted'});
@@ -222,8 +252,15 @@ function questionPage(main) {
   for (const [key, value] of Object.entries(choicesFor(question))) {
     const option = button(`${key}. ${value}`, () => {
       data.answers[n] = key;
-      if (n === 45) navigate('summary');
-      else chooseQuestion(n + 1);
+      if (nextSection) {
+        save();
+        progress.textContent = `${count(data)}/45 đã chọn`;
+        jump.classList.add('answered');
+        for (const choice of choices.querySelectorAll('button')) {
+          choice.setAttribute('aria-pressed', String(choice === option));
+        }
+      }
+      advance();
     }, {lang: 'ru', 'aria-pressed': String(oldAnswer === key)});
     option.disabled = data.complete;
     choices.append(option);
@@ -244,7 +281,7 @@ function questionPage(main) {
     mark.setAttribute('aria-pressed', String(marked));
     jump.classList.toggle('marked', marked);
   }
-  controls.append(previous, mark, button(n === 45 ? 'Tổng kết' : 'Câu tiếp →', () => n === 45 ? navigate('summary') : chooseQuestion(n + 1), {class: 'primary'}));
+  controls.append(previous, mark, button(n === 45 ? 'Tổng kết' : 'Câu tiếp →', advance, {class: 'primary'}));
   const grid = el('nav', undefined, {class: 'question-grid', 'aria-label': 'Chuyển đến câu hỏi'});
   let jump;
   for (const {number} of exam.questions) {
